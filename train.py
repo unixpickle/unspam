@@ -39,11 +39,20 @@ def main():
             false_negs = count_false_negatives(model(test_inputs), test_labels)
             print('step %d: train=%f test=%f false_neg=%d' %
                   (i, train_loss.item(), test_loss.item(), false_negs))
+            save(output_path, model, words)
 
 
 def count_false_negatives(outputs, labels):
     spams = (outputs < 0.5).type(torch.FloatTensor)
     return torch.sum(spams * labels)
+
+
+def save(output_path, model, words):
+    state = {
+        'model': model.state_dict(),
+        'words': words,
+    }
+    torch.save(state, output_path)
 
 
 if __name__ == '__main__':
