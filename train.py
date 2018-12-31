@@ -5,6 +5,7 @@ Train a classifier.
 import itertools
 import sys
 
+import torch
 import torch.nn as nn
 import torch.optim as optim
 
@@ -35,7 +36,14 @@ def main():
         train_loss.backward()
         optimizer.step()
         if not i % 100:
-            print('step %d: train=%f test=%f' % (i, train_loss.item(), test_loss.item()))
+            false_negs = count_false_negatives(model(test_inputs), test_labels)
+            print('step %d: train=%f test=%f false_neg=%d' %
+                  (i, train_loss.item(), test_loss.item(), false_negs))
+
+
+def count_false_negatives(outputs, labels):
+    spams = (outputs < 0.5).type(torch.FloatTensor)
+    return torch.sum(spams * labels)
 
 
 if __name__ == '__main__':
