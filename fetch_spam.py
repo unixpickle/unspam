@@ -7,7 +7,7 @@ import json
 import os
 import sys
 
-from unspam.util import fetch_message
+from unspam.email import fetch_message
 
 
 OUTPUT_DIR = 'spam'
