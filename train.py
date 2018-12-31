@@ -2,6 +2,7 @@
 Train a classifier.
 """
 
+import itertools
 import sys
 
 import torch.nn as nn
@@ -24,16 +25,17 @@ def main():
     test_inputs, test_labels = dataset.samples(words, train=False)
 
     model = Model(len(words))
-    optimizer = optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = optim.Adam(model.parameters(), lr=1e-3, weight_decay=0.02)
     loss_fn = nn.BCELoss()
 
-    while True:
+    for i in itertools.count():
         optimizer.zero_grad()
         train_loss = loss_fn(model(train_inputs), train_labels)
         test_loss = loss_fn(model(test_inputs), test_labels)
         train_loss.backward()
         optimizer.step()
-        print('train=%f test=%f' % (train_loss.item(), test_loss.item()))
+        if not i % 100:
+            print('step %d: train=%f test=%f' % (i, train_loss.item(), test_loss.item()))
 
 
 if __name__ == '__main__':

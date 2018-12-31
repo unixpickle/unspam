@@ -12,7 +12,8 @@ class Model(nn.Module):
     """
 
     def __init__(self, num_words):
-        self.linear = nn.Linear(num_words, 1)
+        super().__init__()
+        self.linear = nn.Linear(num_words + 1, 1)
 
     def forward(self, x):
         return torch.sigmoid(self.linear(x).view(-1))

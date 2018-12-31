@@ -12,6 +12,27 @@ import torch
 from .tokens import tokens
 
 
+def email_vector(words, email):
+    """
+    Convert an email to a vector.
+
+    Args:
+      words: a list of words.
+      email: the email dict.
+
+    Returns:
+      A list of floats.
+    """
+    word2index = {w: i for i, w in enumerate(words)}
+    vec = [0.0] * (len(words) + 1)
+    for tok in _email_tokens(email):
+        if tok in word2index:
+            vec[word2index[tok] + 1] += 1.0
+        else:
+            vec[0] += 1.0
+    return vec
+
+
 class Dataset:
     """
     A dataset for training a spam filter.
@@ -27,20 +48,18 @@ class Dataset:
         return res
 
     def top_words(self, n=2000):
-        pairs = sorted(list(self.token_counts()), key=lambda x: x[1])
+        pairs = sorted(list(self.token_counts().items()), key=lambda x: x[1], reverse=True)
         return [x[0] for x in pairs[:n]]
 
     def samples(self, words, train=True):
         inputs = []
         labels = [0.0] * len(self.spam.emails) + [1.0] * len(self.real.emails)
         for email in self.spam.emails + self.real.emails:
-            toks = set(_email_tokens(email))
-            in_vec = [1.0 if word in toks else 0.0 for word in words]
-            inputs.append(in_vec)
+            inputs.append(email_vector(words, email))
         inputs = [x for i, x in enumerate(inputs) if (i % 4 != 0) == train]
         labels = [x for i, x in enumerate(labels) if (i % 4 != 0) == train]
-        return (torch.fromarray(np.array(inputs, dtype=np.float32)),
-                torch.fromarray(np.array(labels, dtype=np.float32)))
+        return (torch.from_numpy(np.array(inputs, dtype=np.float32)),
+                torch.from_numpy(np.array(labels, dtype=np.float32)))
 
 
 class EmailSet:
