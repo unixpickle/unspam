@@ -2,6 +2,7 @@
 Classification models.
 """
 
+import torch
 import torch.nn as nn
 
 
@@ -14,4 +15,4 @@ class Model(nn.Module):
         self.linear = nn.Linear(num_words, 1)
 
     def forward(self, x):
-        return self.linear(x).view(-1)
+        return torch.sigmoid(self.linear(x).view(-1))

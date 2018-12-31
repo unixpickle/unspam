@@ -4,7 +4,6 @@ Train a classifier.
 
 import sys
 
-import torch
 import torch.nn as nn
 import torch.optim as optim
 
@@ -21,9 +20,8 @@ def main():
 
     dataset = Dataset(spam_path, real_path)
     words = dataset.top_words()
-    inputs, labels = dataset.samples(words)
-    inputs = torch.fromarray(inputs)
-    labels = torch.fromarray(labels)
+    train_inputs, train_labels = dataset.samples(words)
+    test_inputs, test_labels = dataset.samples(words, train=False)
 
     model = Model(len(words))
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
@@ -31,10 +29,11 @@ def main():
 
     while True:
         optimizer.zero_grad()
-        loss = loss_fn(torch.sigmoid(model(inputs)), labels)
-        loss.backward()
+        train_loss = loss_fn(model(train_inputs), train_labels)
+        test_loss = loss_fn(model(test_inputs), test_labels)
+        train_loss.backward()
         optimizer.step()
-        print('loss=%f' % loss.item())
+        print('train=%f test=%f' % (train_loss.item(), test_loss.item()))
 
 
 if __name__ == '__main__':

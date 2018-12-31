@@ -7,6 +7,7 @@ import json
 import os
 
 import numpy as np
+import torch
 
 from .tokens import tokens
 
@@ -29,14 +30,17 @@ class Dataset:
         pairs = sorted(list(self.token_counts()), key=lambda x: x[1])
         return [x[0] for x in pairs[:n]]
 
-    def samples(self, words):
+    def samples(self, words, train=True):
         inputs = []
         labels = [0.0] * len(self.spam.emails) + [1.0] * len(self.real.emails)
         for email in self.spam.emails + self.real.emails:
             toks = set(_email_tokens(email))
             in_vec = [1.0 if word in toks else 0.0 for word in words]
             inputs.append(in_vec)
-        return np.array(inputs, dtype=np.float32), np.array(labels, dtype=np.float32)
+        inputs = [x for i, x in enumerate(inputs) if (i % 4 != 0) == train]
+        labels = [x for i, x in enumerate(labels) if (i % 4 != 0) == train]
+        return (torch.fromarray(np.array(inputs, dtype=np.float32)),
+                torch.fromarray(np.array(labels, dtype=np.float32)))
 
 
 class EmailSet:
