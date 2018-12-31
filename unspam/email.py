@@ -3,6 +3,8 @@ Utilities for dealing with emails.
 """
 
 import email
+import re
+
 from bs4 import BeautifulSoup
 
 
@@ -29,6 +31,28 @@ def fetch_message(conn, id):
         subject = ''
     body = _text_body(msg)
     return {'subject': subject, 'body': body}
+
+
+def move_message(conn, id, dest_folder):
+    """
+    Move a message from the current folder into a
+    different folder.
+    """
+    # https://stackoverflow.com/questions/3527933/move-an-email-in-gmail-with-python-and-imaplib
+    resp, data = conn.fetch(id, "(UID)")
+    msg_uid = _parse_uid(data[0])
+    result = conn.uid('COPY', msg_uid, dest_folder)
+    if result[0] == 'OK':
+        conn.uid('STORE', msg_uid, '+FLAGS', '(\\Deleted)')
+        conn.expunge()
+    else:
+        raise RuntimeError('failed to copy message')
+
+
+def _parse_uid(uid):
+    pattern_uid = re.compile('\\d+ \\(UID (?P<uid>\\d+)\\)')
+    match = pattern_uid.match(str(uid, 'utf-8'))
+    return match.group('uid')
 
 
 def _raw_data(body_data):
