@@ -21,9 +21,12 @@ def fetch_message(conn, id):
     """
     payload = _raw_data(conn.fetch(id, '(RFC822)')[1])
     msg = email.message_from_bytes(payload)
-    subject, enc = email.header.decode_header(msg['Subject'])[0]
-    if isinstance(subject, bytes):
-        subject = _bytes_to_str(subject, enc)
+    if msg['Subject']:
+        subject, enc = email.header.decode_header(msg['Subject'])[0]
+        if isinstance(subject, bytes):
+            subject = _bytes_to_str(subject, enc)
+    else:
+        subject = ''
     body = _text_body(msg)
     return {'subject': subject, 'body': body}
 
