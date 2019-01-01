@@ -1,5 +1,5 @@
 """
-Fetch the contents of the spam folder.
+Move classified spam to the spam folder.
 """
 
 import imaplib
