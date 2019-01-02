@@ -38,7 +38,7 @@ def remove_spam(args, conn, model, words):
         vec = torch.from_numpy(np.array([raw_vec], dtype=np.float32))
         pred = model(vec)[0].detach().numpy()
         if pred < 0.5 and len(doc['subject'] + doc['body']) > args.min_length:
-            sys.stderr.write('Found spam: %s\n' % doc['subject'])
+            sys.stderr.write('Found spam (score=%f): %s\n' % (pred, doc['subject']))
             move_message(conn, message_id, args.out_mailbox)
             return True
     return False
