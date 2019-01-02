@@ -1,5 +1,11 @@
 """
 Train a classifier.
+
+Examples:
+
+    $ python train.py spam/ real/ output.pt
+
+Press Ctrl+C to kill training once the loss levels out.
 """
 
 import itertools
