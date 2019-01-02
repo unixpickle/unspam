@@ -2,6 +2,7 @@
 Move classified spam to the spam folder.
 """
 
+import argparse
 import imaplib
 import sys
 
@@ -13,29 +14,22 @@ from unspam.email import fetch_message, move_message
 from unspam.model import Model
 
 
-MIN_LENGTH = 60
-
-
 def main():
-    if len(sys.argv) != 4:
-        sys.stderr.write('Usage: fetch_spam.py <username> <password> <model>\n')
-        sys.exit(1)
+    args = arg_parser().parse_args()
 
-    username, password, model_path = sys.argv[1:]
-
-    state = torch.load(model_path)
+    state = torch.load(args.model)
     words = state['words']
     model = Model(len(words))
     model.load_state_dict(state['model'])
 
-    with imaplib.IMAP4_SSL('imap.ge.xfinity.com', 993) as conn:
-        conn.login(username, password)
-        conn.select('INBOX')
-        while remove_spam(conn, model, words):
+    with imaplib.IMAP4_SSL(args.server, 993) as conn:
+        conn.login(args.username, args.password)
+        conn.select(args.in_mailbox)
+        while remove_spam(args, conn, model, words):
             pass
 
 
-def remove_spam(conn, model, words):
+def remove_spam(args, conn, model, words):
     _, ids = conn.search(None, 'ALL')
     for i, message_id in enumerate(ids[0].split(b' ')):
         message_id = str(message_id, 'utf-8')
@@ -43,11 +37,24 @@ def remove_spam(conn, model, words):
         raw_vec = email_vector(words, doc)
         vec = torch.from_numpy(np.array([raw_vec], dtype=np.float32))
         pred = model(vec)[0].detach().numpy()
-        if pred < 0.5 and len(doc['subject'] + doc['body']) > MIN_LENGTH:
+        if pred < 0.5 and len(doc['subject'] + doc['body']) > args.min_length:
             sys.stderr.write('Found spam: %s\n' % doc['subject'])
-            move_message(conn, message_id, 'Junk')
+            move_message(conn, message_id, args.out_mailbox)
             return True
     return False
+
+
+def arg_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--server', help='imap server', default='imap.ge.xfinity.com')
+    parser.add_argument('--username', help='imap username', required=True)
+    parser.add_argument('--password', help='imap password', required=True)
+    parser.add_argument('--in-mailbox', help='input mailbox', default='Inbox')
+    parser.add_argument('--out-mailbox', help='spam mailbox', default='Junk')
+    parser.add_argument('--model', help='model path', default='output.pt')
+    parser.add_argument('--min-length', help='minimum characters to scan email', default=60,
+                        type=int)
+    return parser
 
 
 if __name__ == '__main__':

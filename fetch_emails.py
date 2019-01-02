@@ -21,7 +21,7 @@ def main():
     args = arg_parser().parse_args()
     if not os.path.exists(args.output_dir):
         os.mkdir(args.output_dir)
-    with imaplib.IMAP4_SSL('imap.ge.xfinity.com', 993) as conn:
+    with imaplib.IMAP4_SSL(args.server, 993) as conn:
         conn.login(args.username, args.password)
         _, data = conn.select(args.mailbox)
         num_messages = int(data[0])
