@@ -3,13 +3,13 @@ Train a classifier.
 
 Examples:
 
-    $ python train.py spam/ real/ output.pt
+    $ python train.py spam/ real/
 
 Press Ctrl+C to kill training once the loss levels out.
 """
 
+import argparse
 import itertools
-import sys
 
 import torch
 import torch.nn as nn
@@ -20,15 +20,11 @@ from unspam.model import Model
 
 
 def main():
-    if len(sys.argv) != 4:
-        sys.stderr.write('Usage: train.py <spam> <real> <output.pt>\n')
-        sys.exit(1)
+    args = arg_parser().parse_args()
 
-    spam_path, real_path, output_path = sys.argv[1:]
-
-    dataset = Dataset(spam_path, real_path)
+    dataset = Dataset(args.spam, args.real)
     words = dataset.top_words()
-    train_inputs, train_labels = dataset.samples(words)
+    train_inputs, train_labels = dataset.samples(words, test=args.full)
     test_inputs, test_labels = dataset.samples(words, train=False)
 
     model = Model(len(words))
@@ -45,7 +41,7 @@ def main():
             false_negs = count_false_negatives(model(test_inputs), test_labels)
             print('step %d: train=%f test=%f false_neg=%d' %
                   (i, train_loss.item(), test_loss.item(), false_negs))
-            save(output_path, model, words)
+            save(args.model, model, words)
 
 
 def count_false_negatives(outputs, labels):
@@ -59,6 +55,15 @@ def save(output_path, model, words):
         'words': words,
     }
     torch.save(state, output_path)
+
+
+def arg_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model', help='model path', default='output.pt')
+    parser.add_argument('--full', help='train on full dataset', action='store_true')
+    parser.add_argument('spam', help='spam directory')
+    parser.add_argument('real', help='non-spam directory')
+    return parser
 
 
 if __name__ == '__main__':

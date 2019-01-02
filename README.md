@@ -22,10 +22,10 @@ Next, make sure the data is all correct. Remove any false positives/negatives. T
 Once we have a dataset, we can train a classifier. Do this with the `train.py` script:
 
 ```
-python train.py spam/ real/ output.pt
+python train.py spam/ real/
 ```
 
-You'll want to kill the program once the training and test loss seem to flatten out.
+This will save a trained classifier to a file called "output.pt". You'll want to kill the program once the training and test loss seem to flatten out.
 
 Finally, you can run a loop to move spam to the junk folder:
 

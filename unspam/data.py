@@ -51,13 +51,15 @@ class Dataset:
         pairs = sorted(list(self.token_counts().items()), key=lambda x: x[1], reverse=True)
         return [x[0] for x in pairs[:n]]
 
-    def samples(self, words, train=True):
+    def samples(self, words, train=True, test=True):
+        assert train or test, 'no dataset selected'
         inputs = []
         labels = [0.0] * len(self.spam.emails) + [1.0] * len(self.real.emails)
         for email in self.spam.emails + self.real.emails:
             inputs.append(email_vector(words, email))
-        inputs = [x for i, x in enumerate(inputs) if (i % 4 != 0) == train]
-        labels = [x for i, x in enumerate(labels) if (i % 4 != 0) == train]
+        if train != test:
+            inputs = [x for i, x in enumerate(inputs) if (i % 4 != 0) == train]
+            labels = [x for i, x in enumerate(labels) if (i % 4 != 0) == train]
         return (torch.from_numpy(np.array(inputs, dtype=np.float32)),
                 torch.from_numpy(np.array(labels, dtype=np.float32)))
 
