@@ -9,6 +9,7 @@ Examples:
 """
 
 import argparse
+import hashlib
 import imaplib
 import json
 import os
@@ -30,8 +31,17 @@ def main():
             message_id = str(message_id, 'utf-8')
             sys.stderr.write('Fetching message %d of %d: %s\n' % (i, num_messages, message_id))
             doc = fetch_message(conn, message_id)
-            with open(os.path.join(args.output_dir, message_id + '.json'), 'w+') as out_file:
-                json.dump(doc, out_file)
+            data = bytes(json.dumps(doc), 'utf-8')
+            filename = os.path.join(args.output_dir, content_filename(data) + '.json')
+            if not os.path.exists(filename):
+                with open(filename, 'wb+') as out_file:
+                    out_file.write(data)
+
+
+def content_filename(data):
+    h = hashlib.sha1()
+    h.update(data)
+    return h.hexdigest()
 
 
 def arg_parser():
