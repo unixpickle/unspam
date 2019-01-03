@@ -11,6 +11,7 @@ def tokens(s):
     """
     s = s.lower()
     s = _replace_urls(s)
+    s = _replace_numerals(s)
     s = _replace_unicode(s)
     s = _replace_punctuation(s)
     return s.split()
@@ -18,6 +19,10 @@ def tokens(s):
 
 def _replace_urls(s):
     return re.sub('https?://[^\\s]*', ' URL ', s)
+
+
+def _replace_numerals(s):
+    return re.sub('[0-9]+', ' NUM ', s)
 
 
 def _replace_unicode(s):
